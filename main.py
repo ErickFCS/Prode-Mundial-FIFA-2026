@@ -1,6 +1,12 @@
-def main():
-    print("Hello from tp1!")
+#!./.venv/bin/python
 
+from flask import Flask
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "You are on the home"
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
+
