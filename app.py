@@ -2,11 +2,11 @@
 
 from flask import Flask
 
-from controllers.partidos_controller import partidos_blueprint
-from controllers.predicciones_controller import predicciones_blueprint
-from controllers.ranking_controller import ranking_blueprint
-from controllers.resultados_controller import resultados_blueprint
-from controllers.usuarios_controller import usuarios_blueprint
+from backend.controllers.partidos_controller import partidos_blueprint
+from backend.controllers.predicciones_controller import predicciones_blueprint
+from backend.controllers.ranking_controller import ranking_blueprint
+from backend.controllers.resultados_controller import resultados_blueprint
+from backend.controllers.usuarios_controller import usuarios_blueprint
 
 app = Flask(__name__)
 
