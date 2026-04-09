@@ -29,12 +29,15 @@ def obtener_conexion():
 
 def inicializar_database(db):
     instrucciones_db = []
-    with open("./db_scheme.sql", "r") as db_scheme:
+    with open("./backend/db_scheme.sql", "r") as db_scheme:
         instrucciones_db = db_scheme.read().split(";")
     cursor = db.cursor()
-    for i in instrucciones_db;
-        cursor.execute(str(i))
-        db.commit()
+    for i in instrucciones_db:
+        try:
+            cursor.execute(str(i))
+            db.commit()
+        except:
+            pass
     cursor.close()
 
 db = obtener_conexion()
