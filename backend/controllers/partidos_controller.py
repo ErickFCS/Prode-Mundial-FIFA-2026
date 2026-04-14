@@ -20,14 +20,12 @@ def crear_partidos():
     datos = request.get_json() 
     cursor = db.cursor()
     cursor.execute(
-        "INSERT INTO partidos (equipo_local, equipo_visitante, ciudad, fecha, estadio, fase) "
-        "VALUES (%s, %s, %s, %s, %s, %s)",
+        "INSERT INTO partidos (equipo_local, equipo_visitante, fecha, fase) "
+        "VALUES (%s, %s, %s, %s)",
         (
             datos["equipo_local"],
             datos["equipo_visitante"],
-            datos.get("ciudad"),
             datos.get("fecha"),
-            datos.get("estadio"),
             datos.get("fase")
         )
     )
@@ -40,8 +38,8 @@ def obtener_partidos_id():
     id = request.args.get("id")
     cursor = db.cursor(dictionary=True)
     cursor.execute(
-        "SELECT * FROM partidos WHERE id_eq1=%s OR id_eq2=%s",
-        (id, id)
+        "SELECT * FROM partidos WHERE id=%s",
+        (id,)
     )
     partido = cursor.fetchall()
     cursor.close()
@@ -49,10 +47,9 @@ def obtener_partidos_id():
 
 @partidos_blueprint.route("/partidos", methods=["DELETE"])     
 def borrar_partido_id(id_partido):
+    id = request.args.get("id")
     cursor = db.cursor()
-    cursor.execute(
-        "DELETE FROM partidos WHERE id_partido=%s"
-        )
+    cursor.execute("DELETE FROM partidos WHERE id=%s",(id,))
     db.commit()
     cursor.close()
     return jsonify(id_partido), 204
