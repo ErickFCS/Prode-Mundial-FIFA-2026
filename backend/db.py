@@ -8,7 +8,7 @@ load_dotenv()
 DATABASE_USERNAME = os.getenv("MYSQL_USERNAME", "fixture")
 DATABASE_PASSWORD = os.getenv("MYSQL_PASSWORD", "password")
 DATABASE_HOST = os.getenv("MYSQL_HOST", "localhost")
-DATABASE_NAME = os.getenv("MYSQL_DATABASE", "fixture_data")
+DATABASE_NAME = os.getenv("MYSQL_DATABASE", "prode")
 DATABASE_PORT = os.getenv("MYSQL_PORT", 3306)
 
 def obtener_conexion():
