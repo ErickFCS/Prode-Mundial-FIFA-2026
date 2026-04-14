@@ -65,14 +65,23 @@ def ranking_get():
 
     ranking_lista = ranking_lista[offset: offset + limit]
 
+    base_url = "/ranking"
+
+    first_offset = 0
+    prev_offset = max(offset - limit, 0)
+    next_offset = offset + limit
+
+    _links = {
+        "_first": {"href": f"{base_url}?_limit={limit}&_offset={first_offset}"},
+        "_prev": {"href": f"{base_url}?_limit={limit}&_offset={prev_offset}" },
+        "_next": {"href": f"{base_url}?_limit={limit}&_offset={next_offset}"},
+        # calcular last_offset cuando tenga total desde db
+        "_last": {"href": f"{base_url}?_limit={limit}&_offset={offset}"}
+    }
+
     response = {
         "ranking": ranking_lista,
-        "_links": {
-            "_first": {},
-            "_prev": {},
-            "_next": {},
-            "_last": {}
-        }
+        "_links": _links
     }
 
     return jsonify(response), 200
