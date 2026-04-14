@@ -25,7 +25,7 @@ def obtener_conexion():
         return conexion
 
     except mysql.connector.Error as err:
-        raise Exception("Error en la connecion a l a base de datos", err)
+        raise Exception("Error en la connecion a la base de datos", err)
 
 def inicializar_database(db):
     instrucciones_db = []
