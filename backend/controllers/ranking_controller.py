@@ -15,8 +15,8 @@ def resultado(local, visitante):
 @ranking_blueprint.route("/ranking", methods=["GET"])
 def ranking_get():
 
-    limit = request.args.get("limit", default=10, type=int)
-    offset = request.args.get("offset", default=0, type=int)
+    limit = request.args.get("_limit", default=10, type=int)
+    offset = request.args.get("_offset", default=0, type=int)
 
     predicciones = [
         {"id_usuario": 1, "id_partido": 1, "local": 2, "visitante": 1},
