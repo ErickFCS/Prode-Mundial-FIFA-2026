@@ -1,3 +1,7 @@
+CREATE DATABASE IF NOT EXISTS prode;
+
+USE prode;
+
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
     nombre VARCHAR(100) NOT NULL,
@@ -19,6 +23,9 @@ CREATE TABLE IF NOT EXISTS predicciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
     id_partido INT NOT NULL,
-    FOREING KEY id_usuario REFERENCES usuarios(id)
+    goles_equipo_local INT NOT NULL,
+    goles_equipo_visitante INT NOT NULL,
+    fecha_prediccion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREING KEY id_usuario REFERENCES usuarios(id),
     FOREING KEY id_partido REFERENCES partidos(id)
-)
+);
