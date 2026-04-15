@@ -12,3 +12,6 @@ venv/
 
 # Secrets
 .env
+
+# IntelliJ config
+.idea/
