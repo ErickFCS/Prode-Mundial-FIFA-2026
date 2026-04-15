@@ -86,7 +86,7 @@ def ranking_get():
 
     response = {
         "ranking": ranking_lista,
-        "_links": _links
+        "_links": links
     }
 
     return jsonify(response), 200
