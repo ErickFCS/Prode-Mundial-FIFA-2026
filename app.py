@@ -1,7 +1,7 @@
 #!./.venv/bin/python
 
 from flasgger.base import yaml
-from flask import Flask
+from flask import Flask, jsonify
 from flasgger import Swagger
 
 from backend.routes.partidos import partidos_blueprint
@@ -41,6 +41,17 @@ app.register_blueprint(ranking_blueprint)
 app.register_blueprint(resultados_blueprint)
 app.register_blueprint(usuarios_blueprint)
 
+@app.errorhandler(RuntimeError)
+def manejar_errores(error_crudo):
+    error_por_defecto = {
+        "code": 500,
+        "description": "Internal Server Error",
+        "level": "error",
+        "message": "Error desconocido"
+    }
+    errores = error_crudo.args[0] if error_crudo.args else [error_por_defecto]
+
+    return jsonify(errores), errores[0].get("code", 500)
 
 if __name__ == "__main__":
     app.run(debug=True)
