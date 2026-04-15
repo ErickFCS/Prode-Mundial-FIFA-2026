@@ -1,14 +1,35 @@
-#!../.venv/bin/python
+#!./.venv/bin/python
 
+from flasgger.base import yaml
 from flask import Flask
+from flasgger import Swagger
 
-from backend.controllers.partidos_controller import partidos_blueprint
-from backend.controllers.predicciones_controller import predicciones_blueprint
-from backend.controllers.ranking_controller import ranking_blueprint
-from backend.controllers.resultados_controller import resultados_blueprint
-from backend.controllers.usuarios_controller import usuarios_blueprint
+from backend.routes.partidos import partidos_blueprint
+from backend.routes.predicciones import predicciones_blueprint
+from backend.routes.ranking import ranking_blueprint
+from backend.routes.resultados import resultados_blueprint
+from backend.routes.usuarios import usuarios_blueprint
 
 app = Flask(__name__)
+
+with open("./swagger.yaml", "r") as f:
+    swagger_file = yaml.safe_load(f.read())
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": 'apispec_1',
+            "route": '/apispec_1.json',
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/apidocs/",
+    "openapi": "3.0.0",
+}
+swagger =  Swagger(app, config=swagger_config, template=swagger_file)
 
 @app.route("/ping", methods=["GET"])
 def pong():
