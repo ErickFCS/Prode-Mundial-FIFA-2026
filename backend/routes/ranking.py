@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from backend.db import db
 
 ranking_blueprint = Blueprint("ranking", __name__)
 
@@ -67,16 +68,43 @@ def ranking_get():
     limit = request.args.get("_limit", default=10, type=int)
     offset = request.args.get("_offset", default=0, type=int)
 
-    predicciones = [
-        {"id_usuario": 1, "id_partido": 1, "local": 2, "visitante": 1},
-        {"id_usuario": 2, "id_partido": 1, "local": 1, "visitante": 0},
-        {"id_usuario": 1, "id_partido": 2, "local": 0, "visitante": 0},
-    ]
+    cursor = db.cursor(dictionary=True)
 
-    resultados = {
-        1: {"local": 2, "visitante": 1},
-        2: {"local": 1, "visitante": 1}
-    }
+    cursor.execute("""
+        SELECT 
+            p.id_usuario,
+            p.id_partido,
+            p.goles_equipo_local AS pred_local,
+            p.goles_equipo_visitante AS pred_visitante,
+            pa.goles_equipo_local AS real_local,
+            pa.goles_equipo_visitante AS real_visitante
+        FROM predicciones p
+        JOIN partidos pa ON p.id_partido = pa.id
+    """)
+
+    filas = cursor.fetchall()
+    cursor.close()
+
+    predicciones = []
+    resultados = {}
+
+    for fila in filas:
+    
+        if fila["real_local"] == -1 or fila["real_visitante"] == -1:
+            continue
+
+        predicciones.append({
+            "id_usuario": fila["id_usuario"],
+            "id_partido": fila["id_partido"],
+            "local": fila["pred_local"],
+            "visitante": fila["pred_visitante"]
+        })
+
+        if fila["id_partido"] not in resultados:
+            resultados[fila["id_partido"]] = {
+                "local": fila["real_local"],
+                "visitante": fila["real_visitante"]
+            }
 
     ranking_lista = calcular_ranking(predicciones, resultados)
    
