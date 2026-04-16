@@ -6,6 +6,7 @@ from backend.routes.utils import (
     CONFLICT_CODE,
     NO_CONTENT_CODE,
     NOT_FOUND_CODE,
+    OK_CODE,
     crear_error,
 )
 from backend.routes.validadores import (
@@ -58,6 +59,7 @@ def obtener_partido():
     try:
         cursor.execute(query, valores)
         partidos = cursor.fetchall()
+        db.commit()
     finally:
         cursor.close()
 
@@ -105,14 +107,51 @@ def crear_partidos():
         cursor.close()
 
 
-@partidos_blueprint.route("/partidos", methods=["GET"])
-def obtener_partidos_id():
-    id = request.args.get("id")
+@partidos_blueprint.route("/partidos/<int:id_crudo>", methods=["GET"])
+def obtener_partidos_id(id_crudo):
+    id = validar_id(id_crudo)
+
+    query = "SELECT equipo_local, equipo_visitante, fase, DATE_FORMAT(fecha, '%Y-%m-%d') as fecha, id, goles_equipo_local, goles_equipo_visitante FROM partidos WHERE id=%(id)s"
+    values = {"id": id}
+
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM partidos WHERE id=%s", (id,))
-    partido = cursor.fetchall()
-    cursor.close()
-    return jsonify(partido), 200
+
+    try:
+        cursor.execute(query, values)
+        partido = dict(cursor.fetchone())
+        db.commit()
+    finally:
+        cursor.close()
+
+
+    if partido == None:
+        raise RuntimeError(
+            [
+                crear_error(
+                    NOT_FOUND_CODE, "NOT FOUND", f"No existe partido con id: {id}"
+                )
+            ]
+        )
+
+    goles_equipo_local = partido.get("goles_equipo_local")
+    goles_equipo_visitante = partido.get("goles_equipo_visitante")
+    if goles_equipo_local != -1 and goles_equipo_visitante != -1:
+        partido.update(
+            {
+                "resultado": {
+                    "local": goles_equipo_local,
+                    "visitante": goles_equipo_visitante,
+                },
+            }
+        )
+    else:
+        partido.update({"resultado": None})
+
+    print(partido)
+    partido.pop("goles_equipo_local", None)
+    partido.pop("goles_equipo_visitante", None)
+
+    return jsonify(partido), OK_CODE
 
 
 @partidos_blueprint.route("/partidos/<int:id_crudo>", methods=["DELETE"])
@@ -125,7 +164,13 @@ def borrar_partido_id(id_crudo):
     }
 
     cursor = db.cursor()
-    cursor.execute("DELETE FROM partidos WHERE id=%s", (id,))
-    db.commit()
-    cursor.close()
-    return jsonify(id_partido), 204
+    try:
+        cursor.execute(query, values)
+        print(cursor.rowcount)
+        if cursor.rowcount == 0:
+            return "", NOT_FOUND_CODE
+
+        db.commit()
+        return "", NO_CONTENT_CODE
+    finally:
+        cursor.close()
