@@ -47,9 +47,12 @@ app.register_blueprint(usuarios_blueprint)
 
 @app.errorhandler(Exception)
 def manejar_errores(error_crudo):
+
+    print(error_crudo)
+
     error_por_defecto = {
         "code": 500,
-        "description": "Internal Server Error",
+        "description": "INTERNAL SERVER ERROR",
         "level": "error",
         "message": "Error desconocido",
     }
@@ -58,8 +61,7 @@ def manejar_errores(error_crudo):
     try:
         return jsonify(errores), errores[0].get("code", INTERNAL_ERROR_CODE)
     except:
-        error_por_defecto.update({"message": errores})
-        print(errores)
+        error_por_defecto.update({"message": str(errores)})
         return jsonify([error_por_defecto]), INTERNAL_ERROR_CODE
 
 
