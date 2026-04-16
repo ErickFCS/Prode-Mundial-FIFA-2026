@@ -57,10 +57,9 @@ def obtener_partido():
 
     try:
         cursor.execute(query, valores)
+        partidos = cursor.fetchall()
     finally:
         cursor.close()
-
-    partidos = cursor.fetchall()
 
     if len(partidos) == 0:
         if wheres != "":
