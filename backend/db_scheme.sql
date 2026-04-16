@@ -5,12 +5,12 @@ USE prode;
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
     nombre VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
     puntos INT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS partidos (
-    id INT AUTO_INCREMENT NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
     equipo_local VARCHAR(50) NOT NULL,
     equipo_visitante VARCHAR(50) NOT NULL,
     fecha DATETIME NOT NULL,
@@ -26,6 +26,6 @@ CREATE TABLE IF NOT EXISTS predicciones (
     goles_equipo_local INT NOT NULL,
     goles_equipo_visitante INT NOT NULL,
     fecha_prediccion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREING KEY id_usuario REFERENCES usuarios(id),
-    FOREING KEY id_partido REFERENCES partidos(id)
-);
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_partido) REFERENCES partidos(id) ON DELETE CASCADE
+)
