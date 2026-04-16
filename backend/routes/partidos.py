@@ -3,6 +3,7 @@ import mysql.connector
 from mysql.connector import errorcode
 from backend.db import db
 from backend.routes.utils import (
+    BAD_REQUEST_CODE,
     CONFLICT_CODE,
     NO_CONTENT_CODE,
     NOT_FOUND_CODE,
@@ -123,7 +124,6 @@ def obtener_partidos_id(id_crudo):
     finally:
         cursor.close()
 
-
     if partido == None:
         raise RuntimeError(
             [
@@ -166,11 +166,125 @@ def borrar_partido_id(id_crudo):
     cursor = db.cursor()
     try:
         cursor.execute(query, values)
-        print(cursor.rowcount)
         if cursor.rowcount == 0:
-            return "", NOT_FOUND_CODE
+            raise RuntimeError(
+                [
+                    crear_error(
+                        NOT_FOUND_CODE, "NOT FOUND", f"no existe partidos con id: {id}"
+                    )
+                ]
+            )
 
         db.commit()
         return "", NO_CONTENT_CODE
+    finally:
+        cursor.close()
+
+
+@partidos_blueprint.route("/partidos/<int:id_crudo>", methods=["PATCH"])
+def reparar_partidos_id(id_crudo):
+    id = validar_id(id_crudo)
+    body = request.get_json()
+    equipo_local = validar_equipo(body.get("equipo_local", ""))
+    equipo_visitante = validar_equipo(body.get("equipo_visitante", ""))
+    fase = validar_fase(body.get("fase", ""))
+    fecha = validar_fecha(body.get("fecha", ""))
+
+    query = "UPDATE partidos SET"
+    sets = ""
+    sets += " equipo_local = %(equipo_local)s," if equipo_local else ""
+    sets += " equipo_visitante = %(equipo_visitante)s," if equipo_visitante else ""
+    sets += " fase = %(fase)s," if fase else ""
+    sets += " fecha = %(fecha)s," if fecha else ""
+
+    if not sets:
+        raise RuntimeError(
+            [
+                crear_error(
+                    BAD_REQUEST_CODE, "BAD REQUEST", "no enviaste nada para reparar"
+                )
+            ]
+        )
+
+    sets = sets.rstrip(",")  # Remueve la ultima coma
+    query += sets
+    query += " WHERE id=%(id)s"
+
+    print(query)
+
+    values = {
+        "id": id,
+        "equipo_local": equipo_local,
+        "equipo_visitante": equipo_visitante,
+        "fase": fase,
+        "fecha": fecha,
+    }
+
+    cursor = db.cursor()
+    try:
+        cursor.execute(query, values)
+        if cursor.rowcount == 0:
+            raise RuntimeError(
+                [
+                    crear_error(
+                        NOT_FOUND_CODE, "NOT FOUND", f"no existe partidos con id: {id}"
+                    )
+                ]
+            )
+
+        db.commit()
+        return "", 204
+    except mysql.connector.Error as error:
+        if error.errno == errorcode.ER_DUP_ENTRY:
+            raise RuntimeError(
+                [
+                    crear_error(
+                        CONFLICT_CODE,
+                        "CONFLICT",
+                        f"el partido con valores {values} ya existe",
+                    )
+                ]
+            )
+        else:
+            raise error
+    finally:
+        cursor.close()
+
+
+@partidos_blueprint.route("/partidos/<int:id_crudo>", methods=["PUT"])
+def remplazar_partidos_id(id_crudo):
+    id = validar_id(id_crudo)
+    nuevo_partido = validar_partido(request.get_json())
+    nuevo_partido.update({"id": id})
+
+    query = "UPDATE partidos SET equipo_local = %(equipo_local)s, equipo_visitante = %(equipo_visitante)s, fase = %(fase)s, fecha = %(fecha)s WHERE id=%(id)s"
+
+    cursor = db.cursor()
+    try:
+        cursor.execute(query, nuevo_partido)
+        if cursor.rowcount == 0:
+            raise RuntimeError(
+                [
+                    crear_error(
+                        NOT_FOUND_CODE, "NOT FOUND", f"no existe partidos con id: {id}"
+                    )
+                ]
+            )
+
+        db.commit()
+        return "", 204
+    except mysql.connector.Error as error:
+        if error.errno == errorcode.ER_DUP_ENTRY:
+            raise RuntimeError(
+                [
+                    crear_error(
+                        CONFLICT_CODE,
+                        "CONFLICT",
+                        f"el partido con valores {nuevo_partido} ya existe",
+                    )
+                ]
+            )
+        else:
+            raise error
     finally:
         cursor.close()
