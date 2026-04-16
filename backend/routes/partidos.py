@@ -1,8 +1,11 @@
 import re
 from flask import Blueprint, jsonify, request
+import mysql.connector
+from mysql.connector import errorcode
 from backend.db import db
 from backend.routes.utils import (
     BAD_REQUEST_CODE,
+    CONFLICT_CODE,
     FASES_VALIDAS,
     NO_CONTENT_CODE,
     NOT_FOUND_CODE,
@@ -109,6 +112,47 @@ def validar_offset(offset_crudo):
     return offset
 
 
+def validar_partido(partido):
+    errores = []
+    if not validar_equipo(partido.get("equipo_local")):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE, "BAD REQUEST", "equipo_local no puede estar vacio"
+            )
+        )
+    if not validar_equipo(partido.get("equipo_visitante")):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE,
+                "BAD REQUEST",
+                "equipo_visitante no puede estar vacio",
+            )
+        )
+    fecha = partido.get("fecha")
+    if not validar_fecha(fecha):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE,
+                "BAD REQUEST",
+                "fecha no puede estar vacio",
+            )
+        )
+    fase = partido.get("fase")
+    if not validar_fase(fase):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE,
+                "BAD REQUEST",
+                "fase no puede estar vacio",
+            )
+        )
+
+    if len(errores) > 0:
+        raise RuntimeError(errores)
+
+    return partido
+
+
 @partidos_blueprint.route("/partidos", methods=["GET"])
 def obtener_partido():
     equipo = validar_equipo(request.args.get("equipo"))
@@ -124,7 +168,7 @@ def obtener_partido():
         "offset": offset,
     }
 
-    query = "SELECT equipo_local, equipo_visitante, fase, fecha, id FROM partidos"
+    query = "SELECT equipo_local, equipo_visitante, fase, DATE_FORMAT(fecha, '%Y-%m-%d') as fecha, id FROM partidos"
     wheres = ""
 
     if equipo:
@@ -142,11 +186,8 @@ def obtener_partido():
     query += f" LIMIT %(limit)s OFFSET %(offset)s"
 
     cursor = db.cursor(dictionary=True)
-    cursor.execute(
-        "SELECT * FROM partidos WHERE equipo_local=%s OR equipo_visitante=%s",
-        (equipo, equipo)
-    )
-    resultados = cursor.fetchall()
+    cursor.execute(query, valores)
+    partidos = cursor.fetchall()
     cursor.close()
 
     if len(partidos) == 0:
@@ -168,40 +209,38 @@ def obtener_partido():
 
 @partidos_blueprint.route("/partidos", methods=["POST"])
 def crear_partidos():
-    datos = request.get_json() 
+    nuevo_partido = validar_partido(request.get_json())
+
+    query = "INSERT INTO partidos (equipo_local, equipo_visitante, fecha, fase) VALUES (%(equipo_local)s, %(equipo_visitante)s, %(fecha)s, %(fase)s) "
     cursor = db.cursor()
-    cursor.execute(
-        "INSERT INTO partidos (equipo_local, equipo_visitante, fecha, fase) "
-        "VALUES (%s, %s, %s, %s)",
-        (
-            datos["equipo_local"],
-            datos["equipo_visitante"],
-            datos.get("fecha"),
-            datos.get("fase")
-        )
-    )
-    db.commit()
-    cursor.close()
-    return jsonify(mensaje="Partido agregado correctamente"), 204
+    try:
+        cursor.execute(query, nuevo_partido)
+        db.commit()
+        return "", 204
+    except mysql.connector.Error as error:
+        if error.errno == errorcode.ER_DUP_ENTRY:
+            raise RuntimeError([crear_error(CONFLICT_CODE, "CONFLICT", f"el partido con valores {nuevo_partido} ya existe")])
+        else:
+            raise error
+    finally:
+        cursor.close()
+
 
 @partidos_blueprint.route("/partidos", methods=["GET"])
 def obtener_partidos_id():
     id = request.args.get("id")
     cursor = db.cursor(dictionary=True)
-    cursor.execute(
-        "SELECT * FROM partidos WHERE id=%s",
-        (id,)
-    )
+    cursor.execute("SELECT * FROM partidos WHERE id=%s", (id,))
     partido = cursor.fetchall()
     cursor.close()
     return jsonify(partido), 200
 
-@partidos_blueprint.route("/partidos", methods=["DELETE"])     
+
+@partidos_blueprint.route("/partidos", methods=["DELETE"])
 def borrar_partido_id(id_partido):
     id = request.args.get("id")
     cursor = db.cursor()
-    cursor.execute("DELETE FROM partidos WHERE id=%s",(id,))
+    cursor.execute("DELETE FROM partidos WHERE id=%s", (id,))
     db.commit()
     cursor.close()
     return jsonify(id_partido), 204
-
