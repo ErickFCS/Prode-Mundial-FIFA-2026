@@ -8,6 +8,7 @@ from backend.routes.utils import (
     NO_CONTENT_CODE,
     NOT_FOUND_CODE,
     OK_CODE,
+    construir_links,
     crear_error,
 )
 from backend.routes.validadores import (
@@ -39,6 +40,7 @@ def obtener_partido():
     }
 
     query = "SELECT equipo_local, equipo_visitante, fase, DATE_FORMAT(fecha, '%Y-%m-%d') as fecha, id FROM partidos"
+    query_para_count = "SELECT count(*) as len from partidos"
     wheres = ""
 
     if equipo:
@@ -52,6 +54,7 @@ def obtener_partido():
         wheres += query_fase if wheres == "" else f" AND {query_fase}"
 
     query += f" WHERE {wheres}" if wheres != "" else ""
+    query_para_count += f" WHERE {wheres}" if wheres != "" else ""
 
     query += f" LIMIT %(limit)s OFFSET %(offset)s"
 
@@ -60,7 +63,12 @@ def obtener_partido():
     try:
         cursor.execute(query, valores)
         partidos = cursor.fetchall()
+        cursor.execute(query_para_count, valores)
+        db_count = cursor.fetchone().get("len")
         db.commit()
+    except Exception as error:
+        db.rollback()
+        raise error
     finally:
         cursor.close()
 
@@ -78,7 +86,7 @@ def obtener_partido():
         else:
             return "", NO_CONTENT_CODE
     else:
-        return jsonify(partidos=partidos), 200
+        return jsonify(_links=construir_links(request.base_url, limit, offset, db_count), partidos=partidos), 200
 
 
 @partidos_blueprint.route("/partidos", methods=["POST"])
@@ -92,6 +100,7 @@ def crear_partidos():
         db.commit()
         return "", 204
     except mysql.connector.Error as error:
+        db.rollback()
         if error.errno == errorcode.ER_DUP_ENTRY:
             raise RuntimeError(
                 [
@@ -104,6 +113,9 @@ def crear_partidos():
             )
         else:
             raise error
+    except Exception as error:
+        db.rollback()
+        raise error
     finally:
         cursor.close()
 
@@ -121,6 +133,9 @@ def obtener_partidos_id(id_crudo):
         cursor.execute(query, values)
         partido = dict(cursor.fetchone())
         db.commit()
+    except Exception as error:
+        db.rollback()
+        raise error
     finally:
         cursor.close()
 
@@ -177,6 +192,9 @@ def borrar_partido_id(id_crudo):
 
         db.commit()
         return "", NO_CONTENT_CODE
+    except Exception as error:
+        db.rollback()
+        raise error
     finally:
         cursor.close()
 
@@ -235,6 +253,7 @@ def reparar_partidos_id(id_crudo):
         db.commit()
         return "", 204
     except mysql.connector.Error as error:
+        db.rollback()
         if error.errno == errorcode.ER_DUP_ENTRY:
             raise RuntimeError(
                 [
@@ -247,6 +266,9 @@ def reparar_partidos_id(id_crudo):
             )
         else:
             raise error
+    except Exception as error:
+        db.rollback()
+        raise error
     finally:
         cursor.close()
 
@@ -274,6 +296,7 @@ def remplazar_partidos_id(id_crudo):
         db.commit()
         return "", 204
     except mysql.connector.Error as error:
+        db.rollback()
         if error.errno == errorcode.ER_DUP_ENTRY:
             raise RuntimeError(
                 [
@@ -286,5 +309,8 @@ def remplazar_partidos_id(id_crudo):
             )
         else:
             raise error
+    except Exception as error:
+        db.rollback()
+        raise error
     finally:
         cursor.close()
