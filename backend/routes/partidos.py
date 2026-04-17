@@ -5,6 +5,7 @@ from backend.db import db
 from backend.routes.utils import (
     BAD_REQUEST_CODE,
     CONFLICT_CODE,
+    CREATED_CODE,
     NO_CONTENT_CODE,
     NOT_FOUND_CODE,
     OK_CODE,
@@ -93,12 +94,12 @@ def obtener_partido():
 def crear_partidos():
     nuevo_partido = validar_partido(request.get_json())
 
-    query = "INSERT INTO partidos (equipo_local, equipo_visitante, fecha, fase) VALUES (%(equipo_local)s, %(equipo_visitante)s, %(fecha)s, %(fase)s) "
+    query = "INSERT INTO partidos (equipo_local, equipo_visitante, fecha, fase) VALUES (%(equipo_local)s, %(equipo_visitante)s, %(fecha)s, %(fase)s)"
     cursor = db.cursor()
     try:
         cursor.execute(query, nuevo_partido)
         db.commit()
-        return "", 204
+        return "", CREATED_CODE
     except mysql.connector.Error as error:
         db.rollback()
         if error.errno == errorcode.ER_DUP_ENTRY:
@@ -162,7 +163,6 @@ def obtener_partidos_id(id_crudo):
     else:
         partido.update({"resultado": None})
 
-    print(partido)
     partido.pop("goles_equipo_local", None)
     partido.pop("goles_equipo_visitante", None)
 
@@ -228,8 +228,6 @@ def reparar_partidos_id(id_crudo):
     query += sets
     query += " WHERE id=%(id)s"
 
-    print(query)
-
     values = {
         "id": id,
         "equipo_local": equipo_local,
@@ -251,7 +249,7 @@ def reparar_partidos_id(id_crudo):
             )
 
         db.commit()
-        return "", 204
+        return "", NO_CONTENT_CODE
     except mysql.connector.Error as error:
         db.rollback()
         if error.errno == errorcode.ER_DUP_ENTRY:
@@ -294,7 +292,7 @@ def remplazar_partidos_id(id_crudo):
             )
 
         db.commit()
-        return "", 204
+        return "", NO_CONTENT_CODE
     except mysql.connector.Error as error:
         db.rollback()
         if error.errno == errorcode.ER_DUP_ENTRY:

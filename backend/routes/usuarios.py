@@ -1,66 +1,264 @@
-
-
 from flask import Blueprint, jsonify, request
+import mysql.connector
+from mysql.connector import errorcode
+from backend.db import db
+from backend.routes.utils import (
+    BAD_REQUEST_CODE,
+    CONFLICT_CODE,
+    CREATED_CODE,
+    NO_CONTENT_CODE,
+    NOT_FOUND_CODE,
+    OK_CODE,
+    construir_links,
+    crear_error,
+)
+from backend.routes.validadores import (
+    validar_equipo,
+    validar_fase,
+    validar_fecha,
+    validar_id,
+    validar_limit,
+    validar_offset,
+    validar_usuario,
+)
 
 usuarios_blueprint = Blueprint("usuarios", __name__)
 
 
 @usuarios_blueprint.route("/usuarios", methods=["GET"])
-def usuarios_get(limit, offset):
-    """Listar usuarios
-    :param limit: Cantidad máxima de registros que se incluirán en cada página de la respuesta.  Pueden devolverse menos registros si la consulta no produce esa cantidad.  El valor por defecto es 10.
-    :type limit: int
-    :param offset: Identificador de paginación que es devuelto a la aplicación por la API cuando se utilizan los enlaces HATEOAS &#39;_prev&#39; o &#39;_next&#39;.  Si no se especifica un offset, la aplicación puede navegar desde la última página devuelta hacia la siguiente, la anterior o la primera.
-    :type offset: int
+def obtener_usuario():
+    limit = validar_limit(request.args.get("_limit"))
+    offset = validar_offset(request.args.get("_offset"))
+    valores = {
+        "limit": limit,
+        "offset": offset,
+    }
 
-    :rtype: Union[UsuarioListResponse, Tuple[UsuarioListResponse, int], Tuple[UsuarioListResponse, int, Dict[str, str]]
-    """
-    return 'do some magic!'
+    query = "SELECT id, nombre FROM usuarios LIMIT %(limit)s OFFSET %(offset)s"
+    query_para_count = "SELECT count(*) as len FROM usuarios"
 
+    cursor = db.cursor(dictionary=True)
 
-@usuarios_blueprint.route("/usuarios", methods=["DELETE"])
-def usuarios_id_delete(id):
-    """Eliminar usuario
-    :param id: ID de usuario que se utilizará en la consulta
-    :type id: int
+    try:
+        cursor.execute(query, valores)
+        usuarios = cursor.fetchall()
+        cursor.execute(query_para_count, valores)
+        db_count = cursor.fetchone().get("len")
+        db.commit()
+    except Exception as error:
+        db.rollback()
+        raise error
+    finally:
+        cursor.close()
 
-    :rtype: Union[None, Tuple[None, int], Tuple[None, int, Dict[str, str]]
-    """
-    return 'do some magic!'
-
-
-@usuarios_blueprint.route("/usuarios", methods=["GET"])
-def usuarios_id_get(id):
-    """Obtener un usuario por ID
-    :param id: ID de usuario que se utilizará en la consulta
-    :type id: int
-
-    :rtype: Union[Usuario, Tuple[Usuario, int], Tuple[Usuario, int, Dict[str, str]]
-    """
-    return 'do some magic!'
-
-
-@usuarios_blueprint.route("/usuarios", methods=["PUT"])
-def usuarios_id_put(id, body):
-    """Reemplazar un usuario
-    Reemplaza todos los campos de un usuario existente. Si no existe, lo crea. Todos los campos son obligatorios.
-
-    :param id: ID de usuario que se utilizará en la consulta
-    :type id: int
-    :param usuario_base: 
-    :type usuario_base: dict | bytes
-
-    :rtype: Union[None, Tuple[None, int], Tuple[None, int, Dict[str, str]]
-    """
-    return 'do some magic!'
+    if len(usuarios) == 0:
+        return "", NO_CONTENT_CODE
+    else:
+        return (
+            jsonify(
+                _links=construir_links(request.base_url, limit, offset, db_count),
+                usuarios=usuarios,
+            ),
+            200,
+        )
 
 
 @usuarios_blueprint.route("/usuarios", methods=["POST"])
-def usuarios_post(body):
-    """Crear usuario
-    :param usuario_base: 
-    :type usuario_base: dict | bytes
+def crear_usuarios():
+    nuevo_usuario = validar_usuario(request.get_json())
 
-    :rtype: Union[None, Tuple[None, int], Tuple[None, int, Dict[str, str]]
-    """
-    return 'do some magic!'
+    query = "INSERT INTO usuarios (nombre, email) VALUES (%(nombre)s, %(email)s)"
+    cursor = db.cursor()
+    try:
+        cursor.execute(query, nuevo_usuario)
+        db.commit()
+        return "", CREATED_CODE
+    except mysql.connector.Error as error:
+        db.rollback()
+        if error.errno == errorcode.ER_DUP_ENTRY:
+            raise RuntimeError(
+                [
+                    crear_error(
+                        CONFLICT_CODE,
+                        "CONFLICT",
+                        f"el usuario con valores {nuevo_usuario} ya existe",
+                    )
+                ]
+            )
+        else:
+            raise error
+    except Exception as error:
+        db.rollback()
+        raise error
+    finally:
+        cursor.close()
+
+
+@usuarios_blueprint.route("/usuarios/<int:id_crudo>", methods=["GET"])
+def obtener_usuarios_id(id_crudo):
+    id = validar_id(id_crudo)
+
+    query = "SELECT email, id, nombre FROM usuarios WHERE id=%(id)s"
+    values = {"id": id}
+
+    cursor = db.cursor(dictionary=True)
+
+    try:
+        cursor.execute(query, values)
+        usuario = dict(cursor.fetchone())
+        db.commit()
+    except Exception as error:
+        db.rollback()
+        raise error
+    finally:
+        cursor.close()
+
+    if usuario == None:
+        raise RuntimeError(
+            [
+                crear_error(
+                    NOT_FOUND_CODE, "NOT FOUND", f"No existe usuario con id: {id}"
+                )
+            ]
+        )
+
+    return jsonify(usuario), OK_CODE
+
+
+@usuarios_blueprint.route("/usuarios/<int:id_crudo>", methods=["DELETE"])
+def borrar_usuario_id(id_crudo):
+    id = validar_id(id_crudo)
+
+    query = "DELETE FROM usuarios WHERE id=%(id)s"
+    values = {
+        "id": id,
+    }
+
+    cursor = db.cursor()
+    try:
+        cursor.execute(query, values)
+        if cursor.rowcount == 0:
+            raise RuntimeError(
+                [
+                    crear_error(
+                        NOT_FOUND_CODE, "NOT FOUND", f"no existe usuarios con id: {id}"
+                    )
+                ]
+            )
+
+        db.commit()
+        return "", NO_CONTENT_CODE
+    except Exception as error:
+        db.rollback()
+        raise error
+    finally:
+        cursor.close()
+
+
+@usuarios_blueprint.route("/usuarios/<int:id_crudo>", methods=["PATCH"])
+def reparar_usuarios_id(id_crudo):
+    id = validar_id(id_crudo)
+    body = request.get_json()
+    email = validar_equipo(body.get("email", ""))
+    nombre = validar_equipo(body.get("nombre", ""))
+
+    query = "UPDATE usuarios SET"
+    sets = ""
+    sets += " email = %(email)s," if email else ""
+    sets += " nombre = %(nombre)s," if nombre else ""
+
+    if not sets:
+        raise RuntimeError(
+            [
+                crear_error(
+                    BAD_REQUEST_CODE, "BAD REQUEST", "no enviaste nada para reparar"
+                )
+            ]
+        )
+
+    sets = sets.rstrip(",")  # Remueve la ultima coma
+    query += sets
+    query += " WHERE id=%(id)s"
+
+    values = {
+        "id": id,
+        "email": nombre,
+        "nombre": nombre,
+    }
+
+    cursor = db.cursor()
+    try:
+        cursor.execute(query, values)
+        if cursor.rowcount == 0:
+            raise RuntimeError(
+                [
+                    crear_error(
+                        NOT_FOUND_CODE, "NOT FOUND", f"no existe usuarios con id: {id}"
+                    )
+                ]
+            )
+
+        db.commit()
+        return "", NO_CONTENT_CODE
+    except mysql.connector.Error as error:
+        db.rollback()
+        if error.errno == errorcode.ER_DUP_ENTRY:
+            raise RuntimeError(
+                [
+                    crear_error(
+                        CONFLICT_CODE,
+                        "CONFLICT",
+                        f"el usuario con valores {values} ya existe",
+                    )
+                ]
+            )
+        else:
+            raise error
+    except Exception as error:
+        db.rollback()
+        raise error
+    finally:
+        cursor.close()
+
+
+@usuarios_blueprint.route("/usuarios/<int:id_crudo>", methods=["PUT"])
+def remplazar_usuarios_id(id_crudo):
+    id = validar_id(id_crudo)
+    nuevo_usuario = validar_usuario(request.get_json())
+    nuevo_usuario.update({"id": id})
+
+    query = "UPDATE usuarios SET email = %(email)s, nombre = %(nombre)s WHERE id=%(id)s"
+
+    cursor = db.cursor()
+    try:
+        cursor.execute(query, nuevo_usuario)
+        if cursor.rowcount == 0:
+            raise RuntimeError(
+                [
+                    crear_error(
+                        NOT_FOUND_CODE, "NOT FOUND", f"no existe usuarios con id: {id}"
+                    )
+                ]
+            )
+
+        db.commit()
+        return "", NO_CONTENT_CODE
+    except mysql.connector.Error as error:
+        db.rollback()
+        if error.errno == errorcode.ER_DUP_ENTRY:
+            raise RuntimeError(
+                [
+                    crear_error(
+                        CONFLICT_CODE,
+                        "CONFLICT",
+                        f"el usuario con valores {nuevo_usuario} ya existe",
+                    )
+                ]
+            )
+        else:
+            raise error
+    except Exception as error:
+        db.rollback()
+        raise error
+    finally:
+        cursor.close()
