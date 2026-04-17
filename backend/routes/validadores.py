@@ -3,6 +3,18 @@ import re
 from backend.routes.utils import BAD_REQUEST_CODE, FASES_VALIDAS, crear_error
 
 
+def validar_email(email):
+    if not email:
+        return ""
+
+    return email
+
+def validar_nombre(nombre):
+    if not nombre:
+        return ""
+
+    return nombre
+
 def validar_equipo(equipo):
     if not equipo:
         return ""
@@ -153,9 +165,34 @@ def validar_partido(partido):
     return partido
 
 
+def validar_usuario(usuario):
+    errores = []
+    if not validar_email(usuario.get("email")):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE, "BAD REQUEST", "email no puedo estar vacio"
+            )
+        )
+    if not validar_nombre(usuario.get("nombre")):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE,
+                "BAD REQUEST",
+                "nombre no puede estar vacio",
+            )
+        )
+
+    if len(errores) > 0:
+        raise RuntimeError(errores)
+
+    return usuario
+
+
 def validar_id(id_crudo):
     if not id_crudo:
-        return 0
+        raise RuntimeError(
+            [crear_error(BAD_REQUEST_CODE, "BAD REQUEST", f"El id: {id_crudo} no es valido")]
+        )
 
     id = int(id_crudo)
 
