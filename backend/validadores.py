@@ -1,6 +1,6 @@
 import re
 
-from backend.routes.utils import BAD_REQUEST_CODE, FASES_VALIDAS, crear_error
+from backend.utils import BAD_REQUEST_CODE, FASES_VALIDAS, crear_error
 
 
 def validar_email(email):
@@ -9,11 +9,13 @@ def validar_email(email):
 
     return email
 
+
 def validar_nombre(nombre):
     if not nombre:
         return ""
 
     return nombre
+
 
 def validar_equipo(equipo):
     if not equipo:
@@ -169,9 +171,7 @@ def validar_usuario(usuario):
     errores = []
     if not validar_email(usuario.get("email")):
         errores.append(
-            crear_error(
-                BAD_REQUEST_CODE, "BAD REQUEST", "email no puedo estar vacio"
-            )
+            crear_error(BAD_REQUEST_CODE, "BAD REQUEST", "email no puede estar vacío")
         )
     if not validar_nombre(usuario.get("nombre")):
         errores.append(
@@ -188,10 +188,79 @@ def validar_usuario(usuario):
     return usuario
 
 
+def validar_goles_equipo_local(goles_equipo_local_crudo):
+    if not goles_equipo_local_crudo:
+        return ""
+
+    goles_equipo_local = int(goles_equipo_local_crudo)
+
+    if goles_equipo_local < 0:
+        raise RuntimeError(
+            [
+                crear_error(
+                    BAD_REQUEST_CODE,
+                    "BAD REQUEST",
+                    f"goles_equipo_local: {goles_equipo_local} es menor a 0",
+                )
+            ]
+        )
+
+    return goles_equipo_local
+
+
+def validar_goles_equipo_visitante(goles_equipo_visitante_crudo):
+    if not goles_equipo_visitante_crudo:
+        return ""
+
+    goles_equipo_visitante = int(goles_equipo_visitante_crudo)
+
+    if goles_equipo_visitante < 0:
+        raise RuntimeError(
+            [
+                crear_error(
+                    BAD_REQUEST_CODE,
+                    "BAD REQUEST",
+                    f"goles_equipo_visitante: {goles_equipo_visitante} es menor a 0",
+                )
+            ]
+        )
+
+    return goles_equipo_visitante
+
+
+def validar_resultado(resultado):
+    errores = []
+    if not validar_goles_equipo_local(resultado.get("local")):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE,
+                "BAD REQUEST",
+                "local no puede estar vacío",
+            )
+        )
+    if not validar_goles_equipo_visitante(resultado.get("visitante")):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE,
+                "BAD REQUEST",
+                "visitante no puede estar vacío",
+            )
+        )
+
+    if len(errores) > 0:
+        raise RuntimeError(errores)
+
+    return resultado
+
+
 def validar_id(id_crudo):
     if not id_crudo:
         raise RuntimeError(
-            [crear_error(BAD_REQUEST_CODE, "BAD REQUEST", f"El id: {id_crudo} no es valido")]
+            [
+                crear_error(
+                    BAD_REQUEST_CODE, "BAD REQUEST", f"El id: {id_crudo} no es valido"
+                )
+            ]
         )
 
     id = int(id_crudo)

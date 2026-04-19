@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS partidos (
     fecha DATETIME NOT NULL,
     fase VARCHAR(10) NOT NULL,
     goles_equipo_local INT DEFAULT -1,
-    goles_equipo_visitante INT DEFAULT -1
+    goles_equipo_visitante INT DEFAULT -1,
+    UNIQUE (equipo_local, equipo_visitante, fecha)
 );
 
 CREATE TABLE IF NOT EXISTS predicciones (
@@ -27,5 +28,6 @@ CREATE TABLE IF NOT EXISTS predicciones (
     goles_equipo_visitante INT NOT NULL,
     fecha_prediccion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id) ON DELETE CASCADE,
-    FOREIGN KEY (id_partido) REFERENCES partidos(id) ON DELETE CASCADE
+    FOREIGN KEY (id_partido) REFERENCES partidos(id) ON DELETE CASCADE,
+    UNIQUE (id_usuario, id_partido)
 )

@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 import mysql.connector
 from mysql.connector import errorcode
 from backend.db import db
-from backend.routes.utils import (
+from backend.utils import (
     BAD_REQUEST_CODE,
     CONFLICT_CODE,
     CREATED_CODE,
@@ -12,10 +12,8 @@ from backend.routes.utils import (
     construir_links,
     crear_error,
 )
-from backend.routes.validadores import (
+from backend.validadores import (
     validar_equipo,
-    validar_fase,
-    validar_fecha,
     validar_id,
     validar_limit,
     validar_offset,
@@ -43,7 +41,8 @@ def obtener_usuario():
         cursor.execute(query, valores)
         usuarios = cursor.fetchall()
         cursor.execute(query_para_count, valores)
-        db_count = cursor.fetchone().get("len")
+        db_select = cursor.fetchone()
+        db_count = 0 if db_select is None else db_select.get("len")
         db.commit()
     except Exception as error:
         db.rollback()
@@ -105,7 +104,7 @@ def obtener_usuarios_id(id_crudo):
 
     try:
         cursor.execute(query, values)
-        usuario = dict(cursor.fetchone())
+        usuario = cursor.fetchone()
         db.commit()
     except Exception as error:
         db.rollback()
@@ -113,7 +112,7 @@ def obtener_usuarios_id(id_crudo):
     finally:
         cursor.close()
 
-    if usuario == None:
+    if usuario is None:
         raise RuntimeError(
             [
                 crear_error(

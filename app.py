@@ -9,7 +9,7 @@ from backend.routes.predicciones import predicciones_blueprint
 from backend.routes.ranking import ranking_blueprint
 from backend.routes.resultados import resultados_blueprint
 from backend.routes.usuarios import usuarios_blueprint
-from backend.routes.utils import INTERNAL_ERROR_CODE
+from backend.utils import INTERNAL_ERROR_CODE
 
 app = Flask(__name__)
 
@@ -60,8 +60,8 @@ def manejar_errores(error_crudo):
 
     try:
         return jsonify(errores), errores[0].get("code", INTERNAL_ERROR_CODE)
-    except:
-        error_por_defecto.update({"message": str(errores)})
+    except Exception as error_desconocido:
+        error_por_defecto.update({"message": str(error_desconocido)})
         return jsonify([error_por_defecto]), INTERNAL_ERROR_CODE
 
 
