@@ -9,7 +9,7 @@ from backend.routes.predicciones import predicciones_blueprint
 from backend.routes.ranking import ranking_blueprint
 from backend.routes.resultados import resultados_blueprint
 from backend.routes.usuarios import usuarios_blueprint
-from backend.utils import INTERNAL_ERROR_CODE
+from backend.utils import INTERNAL_ERROR_CODE, INTERNAL_ERROR_CODE_MESSAGE
 
 app = Flask(__name__)
 
@@ -51,8 +51,8 @@ def manejar_errores(error_crudo):
     print(error_crudo)
 
     error_por_defecto = {
-        "code": 500,
-        "description": "INTERNAL SERVER ERROR",
+        "code": INTERNAL_ERROR_CODE,
+        "description": INTERNAL_ERROR_CODE_MESSAGE,
         "level": "error",
         "message": "Error desconocido",
     }

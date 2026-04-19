@@ -3,6 +3,7 @@ from backend.db import db
 from backend.utils import (
     NO_CONTENT_CODE,
     NOT_FOUND_CODE,
+    NOT_FOUND_CODE_MESSAGE,
     crear_error,
 )
 from backend.validadores import (
@@ -28,7 +29,7 @@ def partidos_id_resultado_put(id_crudo):
             raise RuntimeError(
                 [
                     crear_error(
-                        NOT_FOUND_CODE, "NOT FOUND", f"no existe partido con id: {id}"
+                        NOT_FOUND_CODE, NOT_FOUND_CODE_MESSAGE, f"no existe partido con id: {id}"
                     )
                 ]
             )

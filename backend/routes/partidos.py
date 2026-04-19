@@ -4,10 +4,13 @@ from mysql.connector import errorcode
 from backend.db import db
 from backend.utils import (
     BAD_REQUEST_CODE,
+    BAD_REQUEST_CODE_MESSAGE,
     CONFLICT_CODE,
+    CONFLICT_CODE_MESSAGE,
     CREATED_CODE,
     NO_CONTENT_CODE,
     NOT_FOUND_CODE,
+    NOT_FOUND_CODE_MESSAGE,
     OK_CODE,
     construir_links,
     crear_error,
@@ -80,7 +83,7 @@ def obtener_partido():
                 [
                     crear_error(
                         NOT_FOUND_CODE,
-                        "NOT FOUND",
+                        NOT_FOUND_CODE_MESSAGE,
                         f"la busqueda con {valores} no retornó resultados",
                     )
                 ]
@@ -151,7 +154,9 @@ def obtener_partidos_id(id_crudo):
         raise RuntimeError(
             [
                 crear_error(
-                    NOT_FOUND_CODE, "NOT FOUND", f"No existe partido con id: {id}"
+                    NOT_FOUND_CODE,
+                    NOT_FOUND_CODE_MESSAGE,
+                    f"No existe partido con id: {id}",
                 )
             ]
         )
@@ -192,7 +197,9 @@ def borrar_partido_id(id_crudo):
             raise RuntimeError(
                 [
                     crear_error(
-                        NOT_FOUND_CODE, "NOT FOUND", f"no existe partidos con id: {id}"
+                        NOT_FOUND_CODE,
+                        NOT_FOUND_CODE_MESSAGE,
+                        f"no existe partidos con id: {id}",
                     )
                 ]
             )
@@ -226,7 +233,9 @@ def reparar_partidos_id(id_crudo):
         raise RuntimeError(
             [
                 crear_error(
-                    BAD_REQUEST_CODE, "BAD REQUEST", "no enviaste nada para reparar"
+                    BAD_REQUEST_CODE,
+                    BAD_REQUEST_CODE_MESSAGE,
+                    "no enviaste nada para reparar",
                 )
             ]
         )
@@ -250,7 +259,9 @@ def reparar_partidos_id(id_crudo):
             raise RuntimeError(
                 [
                     crear_error(
-                        NOT_FOUND_CODE, "NOT FOUND", f"no existe partidos con id: {id}"
+                        NOT_FOUND_CODE,
+                        NOT_FOUND_CODE_MESSAGE,
+                        f"no existe partidos con id: {id}",
                     )
                 ]
             )
@@ -264,7 +275,7 @@ def reparar_partidos_id(id_crudo):
                 [
                     crear_error(
                         CONFLICT_CODE,
-                        "CONFLICT",
+                        CONFLICT_CODE_MESSAGE,
                         f"el partido con valores {values} ya existe",
                     )
                 ]
@@ -293,7 +304,9 @@ def remplazar_partidos_id(id_crudo):
             raise RuntimeError(
                 [
                     crear_error(
-                        NOT_FOUND_CODE, "NOT FOUND", f"no existe partidos con id: {id}"
+                        NOT_FOUND_CODE,
+                        NOT_FOUND_CODE_MESSAGE,
+                        f"no existe partidos con id: {id}",
                     )
                 ]
             )
@@ -307,7 +320,7 @@ def remplazar_partidos_id(id_crudo):
                 [
                     crear_error(
                         CONFLICT_CODE,
-                        "CONFLICT",
+                        CONFLICT_CODE_MESSAGE,
                         f"el partido con valores {nuevo_partido} ya existe",
                     )
                 ]
