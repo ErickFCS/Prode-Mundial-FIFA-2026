@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 import mysql.connector
 from mysql.connector import errorcode
 from backend.db import db
-from backend.routes.utils import (
+from backend.utils import (
     BAD_REQUEST_CODE,
     CONFLICT_CODE,
     CREATED_CODE,
@@ -12,7 +12,7 @@ from backend.routes.utils import (
     construir_links,
     crear_error,
 )
-from backend.routes.validadores import (
+from backend.validadores import (
     validar_equipo,
     validar_fase,
     validar_fecha,
@@ -57,7 +57,7 @@ def obtener_partido():
     query += f" WHERE {wheres}" if wheres != "" else ""
     query_para_count += f" WHERE {wheres}" if wheres != "" else ""
 
-    query += f" LIMIT %(limit)s OFFSET %(offset)s"
+    query += " LIMIT %(limit)s OFFSET %(offset)s"
 
     cursor = db.cursor(dictionary=True)
 
@@ -65,7 +65,8 @@ def obtener_partido():
         cursor.execute(query, valores)
         partidos = cursor.fetchall()
         cursor.execute(query_para_count, valores)
-        db_count = cursor.fetchone().get("len")
+        count_select = cursor.fetchone()
+        db_count = 0 if count_select is None else count_select.get("len")
         db.commit()
     except Exception as error:
         db.rollback()
@@ -87,7 +88,13 @@ def obtener_partido():
         else:
             return "", NO_CONTENT_CODE
     else:
-        return jsonify(_links=construir_links(request.base_url, limit, offset, db_count), partidos=partidos), 200
+        return (
+            jsonify(
+                _links=construir_links(request.base_url, limit, offset, db_count),
+                partidos=partidos,
+            ),
+            200,
+        )
 
 
 @partidos_blueprint.route("/partidos", methods=["POST"])
@@ -132,7 +139,7 @@ def obtener_partidos_id(id_crudo):
 
     try:
         cursor.execute(query, values)
-        partido = dict(cursor.fetchone())
+        partido = cursor.fetchone()
         db.commit()
     except Exception as error:
         db.rollback()
@@ -140,7 +147,7 @@ def obtener_partidos_id(id_crudo):
     finally:
         cursor.close()
 
-    if partido == None:
+    if partido is None:
         raise RuntimeError(
             [
                 crear_error(

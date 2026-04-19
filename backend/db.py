@@ -43,10 +43,11 @@ def inicializar_database(db):
             print(error)
     cursor.close()
 
+
 def correr_seeds(db):
     tablas = ["usuarios", "partidos", "predicciones"]
     cursor = db.cursor()
-    
+
     total_registros = 0
     for tabla in tablas:
         try:
@@ -62,24 +63,27 @@ def correr_seeds(db):
         print("Base de datos vacía. Iniciando carga de seeds...")
         try:
             with open("./backend/db_seeds.sql", "r", encoding="utf-8") as db_seeds:
-                instrucciones = [i.strip() for i in db_seeds.read().split(";") if i.strip()]
-            
+                instrucciones = [
+                    i.strip() for i in db_seeds.read().split(";") if i.strip()
+                ]
+
             for i in instrucciones:
                 try:
                     cursor.execute(i)
                 except Exception as error:
                     print(f"Error en instrucción: {i[:50]}... -> {error}")
                     db.rollback()
-            
+
             db.commit()
             print("Seeds cargados exitosamente.")
-            
+
         except FileNotFoundError:
             print("Error: No se encontró el archivo db_seeds.sql")
     else:
         print(f"Seeds omitidos: Se encontraron {total_registros} registros totales.")
-    
+
     cursor.close()
+
 
 db = obtener_conexion()
 inicializar_database(db)
