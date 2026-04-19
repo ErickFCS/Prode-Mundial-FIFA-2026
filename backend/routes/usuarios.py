@@ -4,10 +4,13 @@ from mysql.connector import errorcode
 from backend.db import db
 from backend.utils import (
     BAD_REQUEST_CODE,
+    BAD_REQUEST_CODE_MESSAGE,
     CONFLICT_CODE,
+    CONFLICT_CODE_MESSAGE,
     CREATED_CODE,
     NO_CONTENT_CODE,
     NOT_FOUND_CODE,
+    NOT_FOUND_CODE_MESSAGE,
     OK_CODE,
     construir_links,
     crear_error,
@@ -79,7 +82,7 @@ def crear_usuarios():
                 [
                     crear_error(
                         CONFLICT_CODE,
-                        "CONFLICT",
+                        CONFLICT_CODE_MESSAGE,
                         f"el usuario con valores {nuevo_usuario} ya existe",
                     )
                 ]
@@ -116,7 +119,9 @@ def obtener_usuarios_id(id_crudo):
         raise RuntimeError(
             [
                 crear_error(
-                    NOT_FOUND_CODE, "NOT FOUND", f"No existe usuario con id: {id}"
+                    NOT_FOUND_CODE,
+                    NOT_FOUND_CODE_MESSAGE,
+                    f"No existe usuario con id: {id}",
                 )
             ]
         )
@@ -140,7 +145,9 @@ def borrar_usuario_id(id_crudo):
             raise RuntimeError(
                 [
                     crear_error(
-                        NOT_FOUND_CODE, "NOT FOUND", f"no existe usuarios con id: {id}"
+                        NOT_FOUND_CODE,
+                        NOT_FOUND_CODE_MESSAGE,
+                        f"no existe usuarios con id: {id}",
                     )
                 ]
             )
@@ -170,7 +177,9 @@ def reparar_usuarios_id(id_crudo):
         raise RuntimeError(
             [
                 crear_error(
-                    BAD_REQUEST_CODE, "BAD REQUEST", "no enviaste nada para reparar"
+                    BAD_REQUEST_CODE,
+                    BAD_REQUEST_CODE_MESSAGE,
+                    "no enviaste nada para reparar",
                 )
             ]
         )
@@ -192,7 +201,9 @@ def reparar_usuarios_id(id_crudo):
             raise RuntimeError(
                 [
                     crear_error(
-                        NOT_FOUND_CODE, "NOT FOUND", f"no existe usuarios con id: {id}"
+                        NOT_FOUND_CODE,
+                        NOT_FOUND_CODE_MESSAGE,
+                        f"no existe usuarios con id: {id}",
                     )
                 ]
             )
@@ -206,7 +217,7 @@ def reparar_usuarios_id(id_crudo):
                 [
                     crear_error(
                         CONFLICT_CODE,
-                        "CONFLICT",
+                        CONFLICT_CODE_MESSAGE,
                         f"el usuario con valores {values} ya existe",
                     )
                 ]
@@ -235,7 +246,9 @@ def remplazar_usuarios_id(id_crudo):
             raise RuntimeError(
                 [
                     crear_error(
-                        NOT_FOUND_CODE, "NOT FOUND", f"no existe usuarios con id: {id}"
+                        NOT_FOUND_CODE,
+                        NOT_FOUND_CODE_MESSAGE,
+                        f"no existe usuarios con id: {id}",
                     )
                 ]
             )
@@ -249,7 +262,7 @@ def remplazar_usuarios_id(id_crudo):
                 [
                     crear_error(
                         CONFLICT_CODE,
-                        "CONFLICT",
+                        CONFLICT_CODE_MESSAGE,
                         f"el usuario con valores {nuevo_usuario} ya existe",
                     )
                 ]

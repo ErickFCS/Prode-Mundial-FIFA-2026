@@ -1,6 +1,11 @@
 import re
 
-from backend.utils import BAD_REQUEST_CODE, FASES_VALIDAS, crear_error
+from backend.utils import (
+    BAD_REQUEST_CODE,
+    BAD_REQUEST_CODE_MESSAGE,
+    FASES_VALIDAS,
+    crear_error,
+)
 
 
 def validar_email(email):
@@ -34,7 +39,7 @@ def validar_fecha(fecha):
         errores.append(
             crear_error(
                 BAD_REQUEST_CODE,
-                "BAD REQUEST",
+                BAD_REQUEST_CODE_MESSAGE,
                 f"La fecha: {fecha} no respeta el formato YYYY-MM-DD",
             )
         )
@@ -42,20 +47,24 @@ def validar_fecha(fecha):
     if dia <= 0 or dia > 31:
         errores.append(
             crear_error(
-                BAD_REQUEST_CODE, "BAD REQUEST", f"El dia: {dia} no esta entre 1 y 31"
+                BAD_REQUEST_CODE,
+                BAD_REQUEST_CODE_MESSAGE,
+                f"El dia: {dia} no esta entre 1 y 31",
             )
         )
     if mes > 12 or mes < 1:
         errores.append(
             crear_error(
-                BAD_REQUEST_CODE, "BAD REQUEST", f"El mes: {mes} no esta entre 1 y 12"
+                BAD_REQUEST_CODE,
+                BAD_REQUEST_CODE_MESSAGE,
+                f"El mes: {mes} no esta entre 1 y 12",
             )
         )
     if anio > 9999 or anio < 1000:
         errores.append(
             crear_error(
                 BAD_REQUEST_CODE,
-                "BAD REQUEST",
+                BAD_REQUEST_CODE_MESSAGE,
                 f"El año: {anio} no esta entre 1000 y 9999",
             )
         )
@@ -66,16 +75,18 @@ def validar_fecha(fecha):
     return fecha
 
 
-def validar_fase(fase):
-    if not fase:
+def validar_fase(fase_cruda):
+    if not fase_cruda:
         return ""
+
+    fase = fase_cruda.lower()
 
     errores = []
     if fase not in FASES_VALIDAS:
         errores.append(
             crear_error(
                 BAD_REQUEST_CODE,
-                "BAD REQUEST",
+                BAD_REQUEST_CODE_MESSAGE,
                 f"La fase: {fase} no esta entre {FASES_VALIDAS}",
             )
         )
@@ -96,7 +107,9 @@ def validar_limit(limit_crudo):
     if limit <= 0:
         errores.append(
             crear_error(
-                BAD_REQUEST_CODE, "BAD REQUEST", f"El limit: {limit} no es mayor a 0"
+                BAD_REQUEST_CODE,
+                BAD_REQUEST_CODE_MESSAGE,
+                f"El limit: {limit} no es mayor a 0",
             )
         )
 
@@ -116,7 +129,9 @@ def validar_offset(offset_crudo):
     if offset < 0:
         errores.append(
             crear_error(
-                BAD_REQUEST_CODE, "BAD REQUEST", f"El offset: {offset} es menor a 0"
+                BAD_REQUEST_CODE,
+                BAD_REQUEST_CODE_MESSAGE,
+                f"El offset: {offset} es menor a 0",
             )
         )
 
@@ -131,14 +146,16 @@ def validar_partido(partido):
     if not validar_equipo(partido.get("equipo_local")):
         errores.append(
             crear_error(
-                BAD_REQUEST_CODE, "BAD REQUEST", "equipo_local no puede estar vacio"
+                BAD_REQUEST_CODE,
+                BAD_REQUEST_CODE_MESSAGE,
+                "equipo_local no puede estar vacio",
             )
         )
     if not validar_equipo(partido.get("equipo_visitante")):
         errores.append(
             crear_error(
                 BAD_REQUEST_CODE,
-                "BAD REQUEST",
+                BAD_REQUEST_CODE_MESSAGE,
                 "equipo_visitante no puede estar vacio",
             )
         )
@@ -147,7 +164,7 @@ def validar_partido(partido):
         errores.append(
             crear_error(
                 BAD_REQUEST_CODE,
-                "BAD REQUEST",
+                BAD_REQUEST_CODE_MESSAGE,
                 "fecha no puede estar vacio",
             )
         )
@@ -156,7 +173,7 @@ def validar_partido(partido):
         errores.append(
             crear_error(
                 BAD_REQUEST_CODE,
-                "BAD REQUEST",
+                BAD_REQUEST_CODE_MESSAGE,
                 "fase no puede estar vacio",
             )
         )
@@ -171,13 +188,15 @@ def validar_usuario(usuario):
     errores = []
     if not validar_email(usuario.get("email")):
         errores.append(
-            crear_error(BAD_REQUEST_CODE, "BAD REQUEST", "email no puede estar vacío")
+            crear_error(
+                BAD_REQUEST_CODE, BAD_REQUEST_CODE_MESSAGE, "email no puede estar vacío"
+            )
         )
     if not validar_nombre(usuario.get("nombre")):
         errores.append(
             crear_error(
                 BAD_REQUEST_CODE,
-                "BAD REQUEST",
+                BAD_REQUEST_CODE_MESSAGE,
                 "nombre no puede estar vacio",
             )
         )
@@ -199,7 +218,7 @@ def validar_goles_equipo_local(goles_equipo_local_crudo):
             [
                 crear_error(
                     BAD_REQUEST_CODE,
-                    "BAD REQUEST",
+                    BAD_REQUEST_CODE_MESSAGE,
                     f"goles_equipo_local: {goles_equipo_local} es menor a 0",
                 )
             ]
@@ -219,7 +238,7 @@ def validar_goles_equipo_visitante(goles_equipo_visitante_crudo):
             [
                 crear_error(
                     BAD_REQUEST_CODE,
-                    "BAD REQUEST",
+                    BAD_REQUEST_CODE_MESSAGE,
                     f"goles_equipo_visitante: {goles_equipo_visitante} es menor a 0",
                 )
             ]
@@ -234,7 +253,7 @@ def validar_resultado(resultado):
         errores.append(
             crear_error(
                 BAD_REQUEST_CODE,
-                "BAD REQUEST",
+                BAD_REQUEST_CODE_MESSAGE,
                 "local no puede estar vacío",
             )
         )
@@ -242,7 +261,7 @@ def validar_resultado(resultado):
         errores.append(
             crear_error(
                 BAD_REQUEST_CODE,
-                "BAD REQUEST",
+                BAD_REQUEST_CODE_MESSAGE,
                 "visitante no puede estar vacío",
             )
         )
@@ -258,7 +277,9 @@ def validar_id(id_crudo):
         raise RuntimeError(
             [
                 crear_error(
-                    BAD_REQUEST_CODE, "BAD REQUEST", f"El id: {id_crudo} no es valido"
+                    BAD_REQUEST_CODE,
+                    BAD_REQUEST_CODE_MESSAGE,
+                    f"El id: {id_crudo} no es valido",
                 )
             ]
         )
@@ -267,7 +288,13 @@ def validar_id(id_crudo):
 
     if id <= 0:
         raise RuntimeError(
-            [crear_error(BAD_REQUEST_CODE, "BAD REQUEST", f"El id: {id} es menor a 0")]
+            [
+                crear_error(
+                    BAD_REQUEST_CODE,
+                    BAD_REQUEST_CODE_MESSAGE,
+                    f"El id: {id} es menor a 0",
+                )
+            ]
         )
 
     return id
