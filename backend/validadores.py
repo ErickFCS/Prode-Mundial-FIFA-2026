@@ -279,12 +279,23 @@ def validar_id(id_crudo):
                 crear_error(
                     BAD_REQUEST_CODE,
                     BAD_REQUEST_CODE_MESSAGE,
-                    f"El id: {id_crudo} no es valido",
+                    "El campo id no puede estar vacio",
                 )
             ]
         )
 
-    id = int(id_crudo)
+    try:
+        id = int(id_crudo)
+    except ValueError:
+        raise RuntimeError(
+            [
+                crear_error(
+                    BAD_REQUEST_CODE,
+                    BAD_REQUEST_CODE_MESSAGE,
+                    f"El id: {id_crudo} no es un número",
+                )
+            ]
+        )
 
     if id <= 0:
         raise RuntimeError(
@@ -298,3 +309,32 @@ def validar_id(id_crudo):
         )
 
     return id
+
+
+def validar_prediccion(prediccion):
+    if not prediccion:
+        prediccion = {}
+
+    errores = []
+    prediccion.update({"id_usuario": validar_id(prediccion.get("id_usuario"))})
+    if not validar_goles_equipo_local(prediccion.get("local")):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE,
+                BAD_REQUEST_CODE_MESSAGE,
+                "local no puede estar vacío",
+            )
+        )
+    if not validar_goles_equipo_visitante(prediccion.get("visitante")):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE,
+                BAD_REQUEST_CODE_MESSAGE,
+                "visitante no puede estar vacío",
+            )
+        )
+
+    if len(errores) > 0:
+        raise RuntimeError(errores)
+
+    return prediccion
