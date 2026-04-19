@@ -1,15 +1,22 @@
 #!./.venv/bin/python
 
+import traceback
+
 from flasgger.base import yaml
 from flask import Flask, jsonify
 from flasgger import Swagger
+from werkzeug.exceptions import HTTPException
 
 from backend.routes.partidos import partidos_blueprint
 from backend.routes.predicciones import predicciones_blueprint
 from backend.routes.ranking import ranking_blueprint
 from backend.routes.resultados import resultados_blueprint
 from backend.routes.usuarios import usuarios_blueprint
-from backend.utils import INTERNAL_ERROR_CODE, INTERNAL_ERROR_CODE_MESSAGE
+from backend.utils import (
+    INTERNAL_ERROR_CODE,
+    INTERNAL_ERROR_CODE_MESSAGE,
+    OK_CODE,
+)
 
 app = Flask(__name__)
 
@@ -35,7 +42,7 @@ swagger = Swagger(app, config=swagger_config, template=swagger_file)
 
 @app.route("/ping", methods=["GET"])
 def pong():
-    return "pong", 200
+    return "pong", OK_CODE
 
 
 app.register_blueprint(partidos_blueprint)
@@ -45,24 +52,55 @@ app.register_blueprint(resultados_blueprint)
 app.register_blueprint(usuarios_blueprint)
 
 
+@app.errorhandler(HTTPException)
+def manejar_errores_nativos(error_crudo):
+    error = {
+        "code": error_crudo.code,
+        "description": error_crudo.description,
+        "level": "error",
+        "message": "Error nativo",
+    }
+
+    return jsonify(errors=[error]), error_crudo.code
+
+
 @app.errorhandler(Exception)
 def manejar_errores(error_crudo):
+    traceback.print_exc()
 
-    print(error_crudo)
+    es_error_personal = (
+        isinstance(error_crudo, RuntimeError)
+        and error_crudo.args
+        and isinstance(error_crudo.args[0], list)
+    )
 
-    error_por_defecto = {
-        "code": INTERNAL_ERROR_CODE,
-        "description": INTERNAL_ERROR_CODE_MESSAGE,
-        "level": "error",
-        "message": "Error desconocido",
-    }
-    errores = error_crudo.args[0] if error_crudo.args else [error_por_defecto]
+    errors = []
 
-    try:
-        return jsonify(errores), errores[0].get("code", INTERNAL_ERROR_CODE)
-    except Exception as error_desconocido:
-        error_por_defecto.update({"message": str(error_desconocido)})
-        return jsonify([error_por_defecto]), INTERNAL_ERROR_CODE
+    if es_error_personal:
+        errors = error_crudo.args[0]
+        if len(errors) == 0:
+            errors = [
+                {
+                    "code": INTERNAL_ERROR_CODE,
+                    "description": INTERNAL_ERROR_CODE_MESSAGE,
+                    "level": "error",
+                    "message": "Se lanzo un error personal, pero vacio.",
+                }
+            ]
+
+    else:
+        errors = [
+            {
+                "code": INTERNAL_ERROR_CODE,
+                "description": INTERNAL_ERROR_CODE_MESSAGE,
+                "level": "error",
+                "message": "Error desconocido. Valla a la consola para más información",
+            }
+        ]
+
+    codigo_http = errors[0].get("code")
+
+    return jsonify(errors=errors), codigo_http
 
 
 if __name__ == "__main__":
