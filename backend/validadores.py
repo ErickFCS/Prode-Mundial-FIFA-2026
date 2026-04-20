@@ -159,6 +159,14 @@ def validar_partido(partido):
                 "equipo_visitante no puede estar vacio",
             )
         )
+    if partido.get("equipo_local") == partido.get("equipo_visitante"):
+        errores.append(
+            crear_error(
+                BAD_REQUEST_CODE,
+                BAD_REQUEST_CODE_MESSAGE,
+                "equipo_local no puede ser igual a equipo_visitante",
+            )
+        )
     fecha = partido.get("fecha")
     if not validar_fecha(fecha):
         errores.append(
