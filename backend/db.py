@@ -12,6 +12,9 @@ DATABASE_NAME = os.getenv("MYSQL_DATABASE", "prode")
 DATABASE_PORT = os.getenv("MYSQL_PORT", 3306)
 CORRER_SEEDS = os.getenv("CORRER_SEEDS", "")
 
+INIT_FILE_PATH = "./database/db_scheme.sql"
+SEED_FILE_PATH = "./database/db_seeds.sql"
+
 
 def obtener_conexion():
     try:
@@ -32,7 +35,7 @@ def obtener_conexion():
 
 def inicializar_database(db):
     instrucciones_db = []
-    with open("./backend/db_scheme.sql", "r") as db_scheme:
+    with open(INIT_FILE_PATH, "r") as db_scheme:
         instrucciones_db = db_scheme.read().split(";")
     cursor = db.cursor()
     for i in instrucciones_db:
@@ -62,7 +65,7 @@ def correr_seeds(db):
     if total_registros == 0:
         print("Base de datos vacía. Iniciando carga de seeds...")
         try:
-            with open("./backend/db_seeds.sql", "r", encoding="utf-8") as db_seeds:
+            with open(SEED_FILE_PATH, "r") as db_seeds:
                 instrucciones = [
                     i.strip() for i in db_seeds.read().split(";") if i.strip()
                 ]
@@ -78,7 +81,7 @@ def correr_seeds(db):
             print("Seeds cargados exitosamente.")
 
         except FileNotFoundError:
-            print("Error: No se encontró el archivo db_seeds.sql")
+            print(f"Error: No se encontró el archivo {SEED_FILE_PATH}")
     else:
         print(f"Seeds omitidos: Se encontraron {total_registros} registros totales.")
 
