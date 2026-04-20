@@ -96,7 +96,7 @@ def obtener_partido():
                 _links=construir_links(request.base_url, limit, offset, db_count),
                 partidos=partidos,
             ),
-            200,
+            OK_CODE,
         )
 
 
