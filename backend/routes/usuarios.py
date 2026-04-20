@@ -61,7 +61,7 @@ def obtener_usuario():
                 _links=construir_links(request.base_url, limit, offset, db_count),
                 usuarios=usuarios,
             ),
-            200,
+            OK_CODE,
         )
 
 
